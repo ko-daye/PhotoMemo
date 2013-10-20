@@ -10,6 +10,6 @@ public class PhotoMemoView extends ImageView {
     public PhotoMemoView(Context context) {
         super(context);
         // 背景を白にする
-        setBackgroundColor(Color.WHITE);
+//        setBackgroundColor(Color.WHITE);
     }
 }
