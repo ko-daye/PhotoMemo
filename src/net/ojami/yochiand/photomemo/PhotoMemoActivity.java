@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Calendar;
 
 import android.app.Activity;
@@ -101,36 +102,51 @@ public class PhotoMemoActivity extends Activity {
 		Log.i("CODE", String.valueOf(requestCode));
 		Log.i("CODE", String.valueOf(resultCode));
 		if (requestCode == 0 && resultCode == Activity.RESULT_OK ) {
-			
-			Bitmap bitmap = null;
-			
-			BitmapFactory.Options opt = new BitmapFactory.Options();
-//			opt.inSampleSize = 10;
-			
-			InputStream is = null;
-			
-			try {
-				is = getContentResolver().openInputStream(mImageUri);
-				
-				Log.i("URI", is.toString());
-				bitmap = BitmapFactory.decodeStream(is, null, opt);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					if (is != null) {
-						is.close();
-					}
-				} catch (IOException e) {
-				}
-			}
-			
-//			bitmap = (Bitmap) data.getExtras().get("data");
-			mView.setImageBitmap(bitmap);
-
-			
-//			mView.setImageURI(mImageUri);
-			
+			setMView();
 		}
+	}
+	
+	private void setMView() {
+		
+		if (mImageUri == null) {
+			return;
+		}
+		
+		Bitmap bitmap = null;
+		
+		BitmapFactory.Options opt = new BitmapFactory.Options();
+//		opt.inSampleSize = 10;
+		
+		InputStream is = null;
+		
+		try {
+			is = getContentResolver().openInputStream(mImageUri);
+			
+			Log.i("URI", is.toString());
+			bitmap = BitmapFactory.decodeStream(is, null, opt);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (is != null) {
+					is.close();
+				}
+			} catch (IOException e) {
+			}
+		}
+		mView.setImageBitmap(bitmap);
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putString("mImageUri", mImageUri.toString());
+	}
+	
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		mImageUri = Uri.parse((String) savedInstanceState.get("mImageUri"));
+		setMView();
 	}
 }
