@@ -15,6 +15,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
@@ -27,6 +28,7 @@ public class PhotoMemoActivity extends Activity {
 	private PhotoMemoView mView;
 	
 	Uri mImageUri;
+	String mFilePath = null;
 
 	// 画面(Activity)が生成されるときの処理
 	@Override
@@ -76,17 +78,24 @@ public class PhotoMemoActivity extends Activity {
 			
 //			intent.putExtra(MediaStore.EXTRA_OUTPUT, "/data/data/net.ojami.yochiand.photomemo/" + Calendar.getInstance().getTimeInMillis());
 			
-			String filename = System.currentTimeMillis() + ".jpg";
-			
-		    ContentValues values = new ContentValues();
-		    values.put(MediaStore.Images.Media.TITLE, filename);
-		    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-		    mImageUri = getContentResolver().insert(
-		            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-		    intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
+//			String filename = System.currentTimeMillis() + ".jpg";
+//			
+//		    ContentValues values = new ContentValues();
+//		    values.put(MediaStore.Images.Media.TITLE, filename);
+//		    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+//		    mImageUri = getContentResolver().insert(
+//		            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+//		    Log.i("URI", mImageUri.toString());
+//		    intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
 		    
-		    Log.i("URI", mImageUri.toString());
+		    // SDカードに保存
+		    String mDirectory = Environment.getExternalStorageDirectory() + "/Android/data/" + getPackageName();
+		    String mFilename = "pht" + System.currentTimeMillis() + ".jpg";
+		    mFilePath = mDirectory + "/" + mFilename;
+		    
+		    Log.i("FilePath", mFilePath);
 			
+		    intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(mFilePath)));
 			intent.addCategory(Intent.CATEGORY_DEFAULT);
 			startActivityForResult(intent, 0);
 			break;
@@ -101,9 +110,24 @@ public class PhotoMemoActivity extends Activity {
 		
 		Log.i("CODE", String.valueOf(requestCode));
 		Log.i("CODE", String.valueOf(resultCode));
-		if (requestCode == 0 && resultCode == Activity.RESULT_OK ) {
-			setMView();
+		if (requestCode == 0) {
+			if (resultCode == Activity.RESULT_OK)  {
+				createContent();
+				setMView();
+			} else {
+//			    getContentResolver().delete(mImageUri, null, null);
+			}
 		}
+	}
+	private void createContent() {
+		
+	    ContentValues values = new ContentValues();
+	    values.put(MediaStore.Images.Media.TITLE, mFilePath);
+	    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+	    mImageUri = getContentResolver().insert(
+	            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+	    Log.i("URI", mImageUri.toString());
+		
 	}
 	
 	private void setMView() {
@@ -124,6 +148,7 @@ public class PhotoMemoActivity extends Activity {
 			
 			Log.i("URI", is.toString());
 			bitmap = BitmapFactory.decodeStream(is, null, opt);
+			mView.setImageBitmap(bitmap);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} finally {
@@ -134,19 +159,23 @@ public class PhotoMemoActivity extends Activity {
 			} catch (IOException e) {
 			}
 		}
-		mView.setImageBitmap(bitmap);
 	}
 	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putString("mImageUri", mImageUri.toString());
+		
+		if (mImageUri != null) {
+			outState.putString("mImageUri", mImageUri.toString());
+		}
 	}
 	
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-		mImageUri = Uri.parse((String) savedInstanceState.get("mImageUri"));
-		setMView();
+		if (mImageUri != null) {
+			mImageUri = Uri.parse((String) savedInstanceState.get("mImageUri"));
+			setMView();
+		}
 	}
 }
